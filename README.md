@@ -27,3 +27,17 @@ il souffre vite d'un manque d'irrigation.
   résolution d'un satellite (10 m pour Sentinel-2).
 - Les photos de feuilles prises au sol ne ressemblent pas aux images prises du ciel :
   cet écart est à documenter.
+
+
+## 🗂️ Structure du Dépôt
+
+```text
+field-scan/
+│
+├── src/
+│   ├── train_yolo.py     # Entraînement du modèle de classification YOLOv8-cls
+│   └── fusion_sig.py     # Fusion des données géospatiales et métriques (NDVI, NDMI)
+│
+├── data_card.md          # Description détaillée du dataset (BananaLSD & Sentinel-2)
+├── requirements.txt      # Dépendances du projet (Geopandas, Ultralytics, Pandas...)
+└── README.md             # Documentation du projet
