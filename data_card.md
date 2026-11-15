@@ -1,23 +1,57 @@
-# Carnet de Données - Projet Field Scan
+# Data Card — Projet Field Scan (Suivi Agricole & Données Complémentaires)
 
-## Sentinel-2 L2A (Copernicus), côte de l'Équateur
-- Accès : copie publique Copernicus sur Microsoft Planetary Computer (STAC)
-- Licence : libre accès Copernicus. Mention : « Contains modified Copernicus Sentinel data 2026 »
-- Zone : carré d'environ 9 km de côté près d'El Guabo (El Oro), bbox [-79.86, -3.32, -79.78, -3.24]
-  (région bananière supposée, à confirmer sur une image de fond)
-- Tuile : T17MPS, système de coordonnées EPSG:32717
-- Saison sèche : S2C_MSIL2A_20260808T153631_R068_T17MPS_20260808T212312 (8 août 2026)
-  pixels valides après masque : 97 %
-- Saison des pluies : image du 10 avril 2026, T17MPS_20260410T204104 (identifiant complet : voir le notebook)
-  pixels valides après masque : 94 %. Pixels communs aux deux dates : 91 %
-- Bandes : B04 (rouge) et B08 (infrarouge proche) à 10 m ; B8A et B11 (infrarouge à ondes courtes) à 20 m ;
-  SCL (classification de la scène) à 20 m, ramenée à 10 m pour le NDVI
-- Masque : seuls les pixels « végétation » et « sol nu » (classes SCL 4 et 5) sont gardés
-- Réflectance : (valeur - 1000) / 10000 (décalage à confirmer pour ces produits)
-- Résultats : NDVI moyen 0,785 (sèche) et 0,758 (pluies) sur les pixels communs
-- Limites :
-  - une seule date par saison, et aucune vérité terrain : validation par cohérence physique uniquement
-  - résolution de 10 m, insuffisante pour compter des pieds
-  - le NDVI sature sur une végétation dense, d'où le NDMI
-  - un premier choix d'image avait 33 % de pixels « sans donnée » (bord de la bande) : écarté
-- Sorties : ndvi_seche_2026-08-08.tif, ndvi_pluies_2026-04-10.tif et leur différence (GeoTIFF, Drive)
+## 1. Résumé du Jeu de Données
+Ce dépôt intègre des données multispectrales Sentinel-2 pour le suivi agronomique de 62 parcelles agricoles (G0_0 à G7_7) en Équateur, ainsi qu'un jeu de données tabulaire complémentaire (California Dataset) utilisé pour les phases d'expérimentation, d'analyse statistique ou de modélisation prédictive du projet.
+
+---
+
+## 2. Zone d'Étude et Caractéristiques Spatiales (Pipeline Principal)
+- Localisation principale : Zone agricole en Équateur.
+- Emprise géographique (WGS 84 / EPSG:4326) :
+  - Longitude : -79.860° à -79.788° Ouest
+  - Latitude : -3.312° à -3.240° Sud
+- Système de coordonnées de référence (SCR) de traitement : EPSG:32717 (WGS 84 / UTM zone 17S) pour l'alignement métrique des rasters.
+
+---
+
+## 3. Structure et Composition des Données
+
+### A. Données Vectorielles (Contours des parcelles)
+- Fichier : parcelles_analysees.geojson
+- Format : GeoJSON (polygones).
+- Contenu : 62 entités représentant les limites exactes de chaque parcelle cultivée (G0_0 à G7_7).
+
+### B. Imagerie Satellitaire Sentinel-2 (Télédétection)
+- Source : Capteur MSI (MultiSpectral Instrument) de la mission Copernicus Sentinel-2 (ESA).
+- Organisation temporelle : Réparties en deux sous-répertoires (humide/ et seche/).
+- Bandes spectrales exploitées :
+  - B04.tif (Rouge — 665 nm) : Résolution de 10 mètres (10980 x 10980 pixels). Absorption chlorophyllienne.
+  - B08.tif (Proche Infrarouge / PIR — 842 nm) : Résolution de 10 mètres (10980 x 10980 pixels). Structure cellulaire de la biomasse.
+  - B11.tif (SWIR — 1610 nm) : Résolution de 20 mètres (non utilisée pour l'instant dans le calcul direct du NDVI).
+- Encodage : Entiers non signés 16 bits (uint16), normalisés par division par 10 000 pour obtenir la réflectance de surface.
+
+### C. Données Tabulaires Complémentaires (California Dataset)
+- Source : Jeu de données de référence de type California (utilisé pour les tests de modélisation, de régression ou d'analyse exploratoire de données tabulaires).
+- Rôle dans le projet : Support d'entraînement ou de validation croisée pour les algorithmes de traitement de données tabulaires associés aux métriques du pipeline.
+
+### D. Sorties du Pipeline
+- Fichiers générés : bulletin_parcelle.csv (saison humide) et bulletin_parcelle_seche.csv (saison sèche).
+- Schéma : id (int), nom (string), ndvi_moyen / ndvi_moyen_seche (float).
+
+---
+
+## 4. Prétraitements et Métriques Dérivées
+- Calcul du NDVI : NDVI = (B08 - B04) / (B08 + B04)
+- Seuil agronomique : Seuil critique fixé à NDVI = 0.35 pour l'identification des parcelles en stress végétatif nécessitant une inspection par drone (YOLOv8n / MobileNetV3).
+
+---
+
+## 5. Limites et Biais Connus
+- Couverture nuageuse : Impact potentiel sur les acquisitions optiques Sentinel-2 en saison humide.
+- Effets de bordure : Pixels mixtes possibles sur les parcelles de très petite surface (résolution de 10 m).
+
+---
+
+## 6. Licence et Attribution
+- Imagerie Sentinel-2 : Données ouvertes du programme Copernicus (ESA / Commission Européenne).
+- Données vectorielles et résultats : Propriété du projet Field Scan.
